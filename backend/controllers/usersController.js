@@ -1,5 +1,5 @@
-const user = require("../models/User")
-const note = require("../models/Note")
+const User = require("../models/User")
+const Note = require("../models/Note")
 const asyncHandler = require("express-async-handler")
 const bcrypt = require("bcrypt")
 
@@ -8,12 +8,41 @@ const bcrypt = require("bcrypt")
 // @route GET /users
 // @access Private
 const getAllUsers = asyncHandler(async (req, res) => {
+    const users = await User.find().select('-password').lean()
+    if(!users) {
+        return res.status(400).json({message: 'No users found'})
+    }
+    res.json(users)
 })
 
 // @desc create a new user
 // @route POST /users
 // @access Private
 const createNewUser = asyncHandler(async (req, res) => {
+    const { username, password, roles } = req.body
+
+    // confirm data
+    if (!username || !password || !Array.isArray(roles) || !roles.length) {
+        return res.status(400).json({message: 'All fields are required'})
+    }
+
+    // check for duplicates
+    const duplicate = await User.findOne({ username }).lean().exec()
+    if(duplicate) {
+        return res.status(409).json({ message: 'Duplicate username' })
+    }
+
+    // hash the password
+    const hashedPassword = await bcrypt.hash(password, 10) // salt rounds
+    const userObject = { username, "Password": hashedPassword, roles}
+
+    // create and store new user
+    const user = await User.create(userObject)
+    if (user) {
+        res.status(201).json({ message: `New user ${username} created!`})
+    } else {
+        res.status(400).json({ message: 'Invalid user date recieved'})
+    }
 })
 
 // @desc update a user
