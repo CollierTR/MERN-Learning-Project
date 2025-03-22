@@ -1,11 +1,11 @@
 *, body, html {
-    background-color: grey;
+    background-color: black;
 }
 
 h1 {
-    color: greenyellow;
+    color: green;
 }
 
 p {
-    color: blueviolet;
+    color: green;
 }
