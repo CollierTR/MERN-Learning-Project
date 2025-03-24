@@ -1,7 +1,6 @@
 const User = require("../models/User")
 const Note = require("../models/Note")
 const asyncHandler = require("express-async-handler")
-const bcrypt = require("bcrypt")
 
 
 // @desc Get all Notes
@@ -23,21 +22,26 @@ const createNewNote = asyncHandler(async (req, res) => {
 
     // confirm data
     if (!title || !user || !text) {
-        res.status(400).json({ message: "all fields are required in request body" })
+        return res.status(400).json({ message: "all fields are required in request body" })
     }
+    try {
+        await User.findById(user).select("-password").lean().exec()
+    } catch {
+        return res.status(400).json({message:"There is no user with this ID"})
+    } 
 
     // check for duplicates
     const duplicate = await Note.findOne({ title }).lean().exec()
     if (duplicate) {
-        res.status(400).json({message:"There is already a note with this title"})
+        return res.status(400).json({message:"There is already a note with this title"})
     }
 
     // create and store a new note
     const newNote = await Note.create({ title, text, user })
     if (newNote) {
-        res.status(201).json({ message: `New note "${title}" created!`})
+        res.status(201).json({ message: `New note ${title} created!`})
     } else {
-        res.status(400).json({ message: 'Invalid data recieved'})
+        return res.status(400).json({ message: 'Invalid data recieved'})
     }
 })
 
