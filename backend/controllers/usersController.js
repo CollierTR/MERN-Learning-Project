@@ -41,7 +41,7 @@ const createNewUser = asyncHandler(async (req, res) => {
     if (user) {
         res.status(201).json({ message: `New user ${username} created!`})
     } else {
-        res.status(400).json({ message: 'Invalid user date recieved'})
+        res.status(400).json({ message: 'Invalid user data recieved'})
     }
 })
 
@@ -88,10 +88,12 @@ const updateUser = asyncHandler(async (req, res) => {
 const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.body
 
+    // validate data
     if (!id) {
         res.status(400).json({ message: 'User id is required'})
     }
 
+    // check if user has notes assigned to them
     const note = await Note.findOne({ user: id }).lean().exec()
     if (note) {
         return res.status(400).json({ message: 'User has assigned notes' })
@@ -102,11 +104,13 @@ const deleteUser = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: 'user not found' })
     }
 
-    const result = await user.deleteOne()
+    const result = await User.deleteOne({_id: id})
 
-    const reply = `Username ${result.username} with ID ${result._id} deleted`
-
-    res.json(reply)
+    if (result.deletedCount === 1) {
+        res.json({ message: `The user ${id} has been deleted successfully` });
+    } else {
+        res.status(500).json({ message: "Failed to delete the User" });
+    }
 })
 
 module.exports = {

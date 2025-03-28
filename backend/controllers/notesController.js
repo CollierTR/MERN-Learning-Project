@@ -83,7 +83,26 @@ const updateNote = asyncHandler(async (req, res) => {
 // @route DELETE /note
 // @access Private
 const deleteNote = asyncHandler(async (req, res) => {
-    console.log("note deleted")
+    const {id} = req.body
+
+    if (!id) {
+        return res.status(400).json({message: 'ID field is required'})
+    }
+
+    const note = await Note.findById(id).exec()
+    if (!note) {
+        return res.status(404).json({message: 'Note not found'})
+    }
+
+    const result = await Note.deleteOne({_id: id})
+
+    if (result.deletedCount === 1) {
+        res.json({ message: `The note ${id} has been deleted successfully` });
+    } else {
+        res.status(500).json({ message: "Failed to delete the note" });
+    }
+
+    
 })
 
 module.exports = {
